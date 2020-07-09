@@ -16,7 +16,7 @@ class PushDataAutomation(Base):
             try:
                 for tab, pk in self.tables.items():
                     self.grab_and_push_records(tab, deepcopy(fields_map[tab]), pk)
-                    time.sleep(2)
+                    # time.sleep(1)
             except Exception as e:
                 pass
 
