@@ -1,0 +1,51 @@
+-- 1 QUERY TRIGGER restaurant_detail_staging
+ALTER TABLE `quick_delivery`.`restaurant_detail_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `options`,
+ADD PRIMARY KEY (`id`);
+
+-- 2 QUERY TRIGGER restaurant_price_and_qty_staging
+ALTER TABLE `quick_delivery`.`restaurant_price_and_qty_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `zip_code`,
+ADD PRIMARY KEY (`id`);
+
+-- 3 QUERY TRIGGER yelp_staging
+ALTER TABLE `quick_delivery`.`yelp_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `schedule`,
+ADD PRIMARY KEY (`id`);
+
+-- 4 QUERY TRIGGER
+ALTER TABLE `quick_delivery`.`price_and_quantity_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `location_company`,
+ADD PRIMARY KEY (`id`);
+
+-- 5 QUERY TRIGGER business
+ALTER TABLE `quick_delivery`.`business`
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `needs_update`,
+ADD PRIMARY KEY (`id`);
+
+-- 6 QUERY TRIGGER product_staging
+ALTER TABLE `quick_delivery`.`product_staging`
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `prod_url_ref`,
+ADD PRIMARY KEY (`id`);
+
+-- 7 QUERY TRIGGER pront_server.restaurant_detail_staging
+ALTER TABLE `pront_server`.`restaurant_detail_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `options`,
+ADD PRIMARY KEY (`id`);
+
+-- 8 QUERY TRIGGER pront_server.restaurant_price_and_qty_staging
+ALTER TABLE `pront_server`.`restaurant_price_and_qty_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `zip_code`,
+ADD PRIMARY KEY (`id`);
+
+-- 9 QUERY TRIGGER pront_server.yelp_staging
+ALTER TABLE `pront_server`.`yelp_staging`
+ADD COLUMN `id` INT(11) NOT NULL AUTO_INCREMENT FIRST,
+ADD COLUMN `update_flag` TINYINT(2) NULL DEFAULT 0 AFTER `schedule`,
+ADD PRIMARY KEY (`id`);

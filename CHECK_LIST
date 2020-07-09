@@ -1,0 +1,22 @@
+1) Run Tables Triggers
+2) Run Cron Job
+3) Change Database Credentials
+4) Update utils.py in database_cleaning projects
+
+-------------------------
+1) add field "id" as primary key, Int and autoincremented.
+2) add field "update_flag", TINYINT default 0
+
+These changes done in 4 tables are:
+1) "restaurant_price_and_qty_staging",
+2) "yelp_staging",
+3) "restaurant_detail_staging",
+4) "price_and_quantity_staging",
+
+----------------------------------
+
+1) add field "update_flag", TINYINT default 0
+Implemented one change in both databases tables:
+
+1) "business",
+2) "product_staging"
