@@ -11,9 +11,9 @@ local_db_credentials = {
 }
 
 live_db_credentials = {
-    "host": "localhost",
-    "user": "root",
-    "passwd": "toor",
+    "host": "162.0.227.242",
+    "user": "quick",
+    "passwd": "(KhyQ,H;[f5,hdzq",
     "database": "quick_delivery"
 }
 
