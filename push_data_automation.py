@@ -2,7 +2,6 @@ import time
 from copy import deepcopy
 
 from base import Base
-from base_test import BaseTest
 
 
 class PushDataAutomation(Base):
