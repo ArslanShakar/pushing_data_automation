@@ -2,7 +2,6 @@ import time
 from copy import deepcopy
 
 from base import Base
-from base_test import BaseTest
 
 
 class PushDataAutomation(Base):
@@ -15,8 +14,8 @@ class PushDataAutomation(Base):
 
         while self.tables:
             try:
-                for tab, pk in self.tables.items():
-                    self.grab_and_push_records(tab, deepcopy(fields_map[tab]), pk)
+                for tab, item in self.tables.items():
+                    self.grab_and_push_records(tab, deepcopy(fields_map[tab]), item['pk'])
                     time.sleep(2)
             except Exception as e:
                 pass

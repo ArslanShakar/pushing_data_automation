@@ -9,15 +9,22 @@ class Base(DBConnection):
     table_primary_key = "id"
 
     tables = {
-        "business": "business_id",
-        "product_staging": "db_id",
-        "yelp_staging": table_primary_key,
-        "restaurant_detail_staging": table_primary_key,
-        "price_and_quantity_staging": table_primary_key,
-        "restaurant_price_and_qty_staging": table_primary_key,
+        "business": {'pk': "business_id", "live_tab": "business_import"},
+        "product_staging": {'pk': "db_id", "live_tab": "products"},
+        "yelp_staging": {'pk': table_primary_key, "live_tab": "yelp_staging"},
+        "restaurant_detail_staging": {'pk': table_primary_key, "live_tab": "restaurant_detail_live"},
+        "price_and_quantity_staging": {'pk': table_primary_key, "live_tab": "price_and_quantity_live"},
+        "restaurant_price_and_qty_staging": {'pk': table_primary_key, "live_tab": "restaurant_price_and_qty_live"},
     }
 
-    def grab_and_push_records(self, table, columns, pk, retry_times=0):
+    product_staging_map = {
+        "store_id": "business_id",
+        "item_name": "name",
+        "img_src": "images",
+        "db_id": "id",
+    }
+
+    def grab_and_push_records(self, table, fields_map, pk, retry_times=0):
         log_info(f"Reading records from {table}...")
         query = f"SELECT * FROM `{table}` WHERE update_flag NOT IN (2, 6) LIMIT {limit}"
 
@@ -32,7 +39,7 @@ class Base(DBConnection):
             if not rows:
                 self.tables.pop(table, '')
                 return
-            columns.remove(pk)
+            fields_map.pop(pk)
 
             for r in rows:
                 try:
@@ -40,9 +47,9 @@ class Base(DBConnection):
                     r = clean_dict(r)
                     r = {k.lower(): v for k, v in r.items()}
                     r['update_flag'] = 2
+                    tuple_val = tuple([r[key] for key in fields_map.keys() if key.lower() != str(r[key]).lower()])
 
-                    tuple_val = tuple([r[key] for key in columns if key.lower() != str(r[key]).lower()])
-                    if len(columns) != len(tuple_val):
+                    if len(fields_map) != len(tuple_val):
                         print(f"Founded Bad Record = {r}")
                         bad_record_ids.add(record_ids[-1])
                         continue
@@ -53,27 +60,28 @@ class Base(DBConnection):
                     log_info(f"Skipped bad record = {r}\nException\n{e}")
         except Exception as e:
             if self.can_retry(f"Exception in grab_records: {e}", retry_times):
-                self.grab_and_push_records(table, columns, pk, retry_times + 1)
+                self.grab_and_push_records(table, fields_map, pk, retry_times + 1)
                 return
 
         if bad_record_ids:
             self.update_records_flag(table, bad_record_ids, pk, flag=6)
             self.sql_connection.commit()
 
-        self.insert_records(table, columns, records, record_ids, pk)
+        self.insert_records(table, fields_map.values(), records, record_ids, pk)
 
     def insert_records(self, table, columns, values, record_ids, pk="db_id", retry_times=0):
         if not values:
             return
-        log_info(f"Inserting records into {table}...")
+        log_info(f"Inserting records into {self.tables[table]['live_tab']}...")
         place_holders = ', '.join(['%s'] * len(columns))
-        query = f"INSERT INTO {table} ({', '.join(f'`{c}`' for c in columns)}) VALUES ({place_holders})"
+        query = f"INSERT INTO {self.tables[table]['live_tab']} " \
+                f"({', '.join(f'`{c}`' for c in columns)}) VALUES ({place_holders})"
 
         try:
             self.update_mysql_connection()
             self.live_sql_conn_cursor.executemany(query, values)
             count = self.live_sql_conn_cursor.rowcount
-            log_info(f"{count} records inserted in {table}", pre='')
+            log_info(f"{count} records inserted in {self.tables[table]['live_tab']}", pre='')
             if not count:
                 return
 
@@ -120,8 +128,13 @@ class Base(DBConnection):
     def get_table_fields_map(self, table, retry_times=0):
         try:
             t1_cols = self.get_table_columns(table, self.sql_conn_cursor)
-            t2_cols = self.get_table_columns(table, self.live_sql_conn_cursor)
-            return [c for c in t1_cols if c in t2_cols]
+            t2_cols = self.get_table_columns(self.tables[table]['live_tab'], self.live_sql_conn_cursor)
+            if table != "product_staging":
+                return {c: c for c in t1_cols if c in t2_cols}
+            else:
+                return {c1: c1 if c1 in t2_cols else self.product_staging_map[c1] for c1 in t1_cols
+                        if c1 in t2_cols or c1 in self.product_staging_map}
+
         except Exception as e:
             if self.can_retry(f"Exception in get_table_fields_map: {e}", retry_times):
                 self.get_table_fields_map(table, retry_times + 1)

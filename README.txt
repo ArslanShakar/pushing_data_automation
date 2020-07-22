@@ -42,10 +42,17 @@ Run Command: crontab -l
 ** To remove all previous scheduled cron jobs please run script "stop_cron_jobs.py":
 Run Command: python3 stop_cron_jobs.py
 
+*********  DATA UPDATING FLAG's **********
+update_flag field till now it has 4 values and their specific meanings:
+update_flag = 0 : "0" means data is just fresh inserted into table by some script.
+update_flag = 1 : "1" means data is formatted and cleaned.
+update_flag = 2 : "2" means that is foramtted, cleaned & it have been moved to live database.
+update_flag = 6 : "6" means it is bad data, May be some required fields are empty or   invalid,
+irrelevant data or may it has some sort of bad data.
+
 Best Regards,
-Alif Arslan
-Cell # +923041151082
-Email: alifarslan786@gmail.com
 https://www.fiverr.com/alifarslan/
 
 Thank you!
+
+🥳🥳🥳
