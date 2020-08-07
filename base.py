@@ -28,9 +28,9 @@ class Base(DBConnection):
             print(f"{len(rows)} rows fetched from {table}")
 
             # Bad Records Ids if store not exists in business table
-            bad_ids = self.get_bad_records_ids(table, rows, pk)
+            bad_ids, rows = self.get_bad_records_ids(table, rows, pk)
             if bad_ids:
-                print(f"{len(bad_record_ids)} Bad Records found with stores id have not registered in business")
+                print(f"{len(bad_ids)} Bad Records found with stores id have not registered in business")
                 self.delete_bad_records(table, bad_ids, pk)
 
             if not rows and not bad_ids:
@@ -121,6 +121,7 @@ class Base(DBConnection):
     def get_bad_records_ids(self, table, rows, pk, retry_times=0):
         # get bad records ids if store_id has not been registered in business table
         bad_ids = set()
+        valid_rows = []
 
         try:
             if table not in ["business", "yelp_staging"] and rows:
@@ -130,16 +131,17 @@ class Base(DBConnection):
                 self.sql_conn_cursor.execute(query)
                 match_ids = {r[0] for r in self.sql_conn_cursor.fetchall()}
 
-                for i, r in enumerate(rows):
+                for r in rows:
                     if r['store_id'] not in match_ids:
                         bad_ids.add(str(r[pk]))
-                        rows.pop(i)
+                        continue
+                    valid_rows.append(r)
 
         except Exception as e:
             if self.can_retry(f"Exception while deleting delete_bad_records: {e}", retry_times):
                 self.get_bad_records_ids(table, rows, pk, retry_times + 1)
 
-        return bad_ids
+        return bad_ids, valid_rows
 
     def get_table_columns(self, table_name, sql_cursor):
         try:
