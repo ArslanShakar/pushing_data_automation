@@ -7,7 +7,7 @@ from collections import OrderedDict
 import usaddress
 
 
-limit = 10000
+limit = 1
 wait_time_seconds = 1
 
 skipped_fields = ['img', 'src', 'url', 'link', 'store_id']

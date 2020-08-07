@@ -11,6 +11,14 @@ local_db_credentials = {
 }
 
 live_db_credentials = {
+    "host": "localhost",
+    "user": "root",
+    "passwd": "toor",
+    "database": "quick_delivery",
+    "port": 3306,
+}
+
+live_db_credentials = {
     "host": "162.0.227.242",
     "user": "quick_delivery2",
     "passwd": "tXKekhGvBKEbWXTA6kE67XEVvHrgsHr3KFMNUtenyt7zeqWkRYusHZNsZPP2Pu",

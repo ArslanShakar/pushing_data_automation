@@ -6,16 +6,7 @@ from utils import *
 
 
 class Base(DBConnection):
-    table_primary_key = "id"
-
-    tables = {
-        "business": {'pk': "business_id", "live_tab": "business_import"},
-        "product_staging": {'pk': "db_id", "live_tab": "products"},
-        "yelp_staging": {'pk': table_primary_key, "live_tab": "yelp_staging"},
-        "restaurant_detail_staging": {'pk': table_primary_key, "live_tab": "restaurant_detail_live"},
-        "price_and_quantity_staging": {'pk': table_primary_key, "live_tab": "price_and_quantity_live"},
-        "restaurant_price_and_qty_staging": {'pk': table_primary_key, "live_tab": "restaurant_price_and_qty_live"},
-    }
+    tables = {}
 
     product_staging_map = {
         "store_id": "business_id",
@@ -34,9 +25,15 @@ class Base(DBConnection):
         try:
             self.sql_dict_cursor.execute(query)
             rows = self.sql_dict_cursor.fetchall()
-            print(f"{len(rows)} rows read from {table}")
+            print(f"{len(rows)} rows fetched from {table}")
 
-            if not rows:
+            # Bad Records Ids if store not exists in business table
+            bad_ids = self.get_bad_records_ids(table, rows, pk)
+            if bad_ids:
+                print(f"{len(bad_record_ids)} Bad Records found with stores id have not registered in business")
+                self.delete_bad_records(table, bad_ids, pk)
+
+            if not rows and not bad_ids:
                 self.tables.pop(table, '')
                 return
             fields_map.pop(pk)
@@ -55,7 +52,7 @@ class Base(DBConnection):
                         continue
 
                     records.append(tuple_val)
-                    log_info(r)
+                    # log_info(r)
                 except Exception as e:
                     log_info(f"Skipped bad record = {r}\nException\n{e}")
         except Exception as e:
@@ -107,6 +104,9 @@ class Base(DBConnection):
                 return
 
     def delete_bad_records(self, table, bad_record_ids, pk, retry_times=0):
+        if not bad_record_ids:
+            return
+
         try:
             log_info(f"Deleting bad records {table}...")
             query = f"DELETE FROM {table} WHERE {pk} IN ({', '.join(bad_record_ids)})"
@@ -117,6 +117,29 @@ class Base(DBConnection):
             if self.can_retry(f"Exception while deleting delete_bad_records: {e}", retry_times):
                 self.delete_bad_records(table, bad_record_ids, pk, retry_times + 1)
                 return
+
+    def get_bad_records_ids(self, table, rows, pk, retry_times=0):
+        # get bad records ids if store_id has not been registered in business table
+        bad_ids = set()
+
+        try:
+            if table not in ["business", "yelp_staging"] and rows:
+                biz_ids = {r['store_id'] for r in rows}
+                query = f"SELECT business_id from `business` WHERE business_id " \
+                        f"IN ({', '.join(str(e) for e in biz_ids)})"
+                self.sql_conn_cursor.execute(query)
+                match_ids = {r[0] for r in self.sql_conn_cursor.fetchall()}
+
+                for i, r in enumerate(rows):
+                    if r['store_id'] not in match_ids:
+                        bad_ids.add(str(r[pk]))
+                        rows.pop(i)
+
+        except Exception as e:
+            if self.can_retry(f"Exception while deleting delete_bad_records: {e}", retry_times):
+                self.get_bad_records_ids(table, rows, pk, retry_times + 1)
+
+        return bad_ids
 
     def get_table_columns(self, table_name, sql_cursor):
         try:
