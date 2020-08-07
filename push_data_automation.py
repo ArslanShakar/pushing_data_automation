@@ -11,9 +11,13 @@ class PushDataAutomation(Base):
         self.tables = deepcopy(tables_dict)
         self.push_data_to_live_database()
 
-        self.get_table_schema('business')
-        self.get_table_schema('product_staging')
-        self.get_table_schema('price_and_quantity_staging')
+        # self.live_sql_conn_cursor.execute("select * from products")
+        # print(self.live_sql_conn_cursor.rowcount)
+        # self.live_sql_connection.commit()
+
+        # self.get_table_schema('business')
+        # self.get_table_schema('product_staging')
+        # self.get_table_schema('price_and_quantity_staging')
 
     def get_table_schema(self, table_name):
         try:

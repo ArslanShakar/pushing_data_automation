@@ -27,15 +27,22 @@ class Base(DBConnection):
             rows = self.sql_dict_cursor.fetchall()
             print(f"{len(rows)} rows fetched from {table}")
 
-            # Bad Records Ids if store not exists in business table
-            bad_ids, rows = self.get_bad_records_ids(table, rows, pk)
-            if bad_ids:
-                print(f"{len(bad_ids)} Bad Records found with stores id have not registered in business")
-                self.delete_bad_records(table, bad_ids, pk)
+            if table not in ["business", "yelp_staging"] and rows:
+                # Bad Records Ids if store not exists in business table
+                bad_ids, rows = self.get_bad_records_ids(table, rows, pk)
+                if bad_ids:
+                    print(f"{len(bad_ids)} Bad Records found with stores id have not registered in business")
+                    self.delete_bad_records(table, bad_ids, pk)
 
-            if not rows and not bad_ids:
-                self.tables.pop(table, '')
-                return
+                if not rows and not bad_ids:
+                    self.tables.pop(table, '')
+                    return
+
+            if table in ["business", "yelp_staging"]:
+                if not rows:
+                    self.tables.pop(table, '')
+                    return
+
             fields_map.pop(pk)
 
             for r in rows:
@@ -124,18 +131,17 @@ class Base(DBConnection):
         valid_rows = []
 
         try:
-            if table not in ["business", "yelp_staging"] and rows:
-                biz_ids = {r['store_id'] for r in rows}
-                query = f"SELECT business_id from `business` WHERE business_id " \
-                        f"IN ({', '.join(str(e) for e in biz_ids)})"
-                self.sql_conn_cursor.execute(query)
-                match_ids = {r[0] for r in self.sql_conn_cursor.fetchall()}
+            biz_ids = {r['store_id'] for r in rows}
+            query = f"SELECT business_id from `business` WHERE business_id " \
+                    f"IN ({', '.join(str(e) for e in biz_ids)})"
+            self.sql_conn_cursor.execute(query)
+            match_ids = {r[0] for r in self.sql_conn_cursor.fetchall()}
 
-                for r in rows:
-                    if r['store_id'] not in match_ids:
-                        bad_ids.add(str(r[pk]))
-                        continue
-                    valid_rows.append(r)
+            for r in rows:
+                if r['store_id'] not in match_ids:
+                    bad_ids.add(str(r[pk]))
+                    continue
+                valid_rows.append(r)
 
         except Exception as e:
             if self.can_retry(f"Exception while deleting delete_bad_records: {e}", retry_times):
