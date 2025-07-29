@@ -19,10 +19,10 @@ live_db_credentials = {
 }
 
 live_db_credentials = {
-    "host": "162.0.227.242",
-    "user": "quick_delivery2",
-    "passwd": "tXKekhGvBKEbWXTA6kE67XEVvHrgsHr3KFMNUtenyt7zeqWkRYusHZNsZPP2Pu",
-    "database": "quick_delivery",
+    "host": "",
+    "user": "",
+    "passwd": "",
+    "database": "",
     "port": 6446,
 }
 
